@@ -1,0 +1,6 @@
+Sitemap: https://financeai.exemplo.com.br/sitemap.xml
+
+User-agent: *
+Allow: /
+Disallow: /reset-password
+Disallow: /auth
