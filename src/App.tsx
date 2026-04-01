@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AppLayout from "@/components/layout/AppLayout";
+import { Analytics } from "@vercel/analytics/react";
 
 // Lazy loading pages for better performance
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
@@ -57,6 +58,7 @@ const App = () => (
           </Routes>
         </Suspense>
       </BrowserRouter>
+      <Analytics />
     </TooltipProvider>
   </QueryClientProvider>
 );
