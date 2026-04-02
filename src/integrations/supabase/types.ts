@@ -18,11 +18,16 @@ export type Database = {
         Row: {
           balance: number
           bank_name: string | null
+          card_brand: string | null
+          closing_day: number | null
           color: string | null
           created_at: string
+          credit_limit: number | null
           currency: string
+          due_day: number | null
           id: string
           is_active: boolean | null
+          last_four_digits: string | null
           name: string
           type: string
           user_id: string
@@ -30,11 +35,16 @@ export type Database = {
         Insert: {
           balance?: number
           bank_name?: string | null
+          card_brand?: string | null
+          closing_day?: number | null
           color?: string | null
           created_at?: string
+          credit_limit?: number | null
           currency?: string
+          due_day?: number | null
           id?: string
           is_active?: boolean | null
+          last_four_digits?: string | null
           name: string
           type?: string
           user_id: string
@@ -42,11 +52,16 @@ export type Database = {
         Update: {
           balance?: number
           bank_name?: string | null
+          card_brand?: string | null
+          closing_day?: number | null
           color?: string | null
           created_at?: string
+          credit_limit?: number | null
           currency?: string
+          due_day?: number | null
           id?: string
           is_active?: boolean | null
+          last_four_digits?: string | null
           name?: string
           type?: string
           user_id?: string

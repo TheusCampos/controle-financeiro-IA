@@ -1,9 +1,14 @@
 import * as React from "react";
 
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
-
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000000;
+
+type ToastActionElement = React.ReactNode;
+
+type ToastProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -174,7 +179,7 @@ function useToast() {
         listeners.splice(index, 1);
       }
     };
-  }, [state]);
+  }, []);
 
   return {
     ...state,

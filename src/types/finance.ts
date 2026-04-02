@@ -29,6 +29,11 @@ export interface Account {
   currency: string;
   bank_name: string | null;
   color: string | null;
+  card_brand: string | null;
+  credit_limit: number | null;
+  closing_day: number | null;
+  due_day: number | null;
+  last_four_digits: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -68,6 +73,13 @@ export interface Budget {
   // computed
   spent?: number;
   category?: Category;
+}
+
+export interface FinancialSummary {
+  totalBalance: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  savingsRate: number;
 }
 
 export interface FinancialGoal {

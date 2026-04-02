@@ -46,6 +46,22 @@ export function getAccountTypeLabel(type: string): string {
   return labels[type] || type;
 }
 
+export function getCardBrandLabel(brand: string | null | undefined): string {
+  const labels: Record<string, string> = {
+    visa: 'Visa',
+    mastercard: 'Mastercard',
+    elo: 'Elo',
+    amex: 'Amex',
+    hipercard: 'Hipercard',
+    other: 'Outro',
+  };
+  return labels[brand || ''] || 'Cartão';
+}
+
+export function formatCardLastDigits(lastDigits: string | null | undefined): string {
+  return lastDigits ? `•••• ${lastDigits}` : '•••• ••••';
+}
+
 export function cn(...inputs: (string | undefined | null | false)[]): string {
   return inputs.filter(Boolean).join(' ');
 }

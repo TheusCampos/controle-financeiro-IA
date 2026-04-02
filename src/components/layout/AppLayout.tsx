@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, 
+  CreditCard,
   ArrowLeftRight, 
   PiggyBank, 
   Target,
@@ -9,13 +10,16 @@ import {
   LogOut, 
   Settings, 
   Menu, 
-  X
+  X,
+  Bot
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/assistant', icon: Bot, label: 'Assistente IA' },
+  { to: '/cards', icon: CreditCard, label: 'Cartões' },
   { to: '/transactions', icon: ArrowLeftRight, label: 'Transações' },
   { to: '/budgets', icon: PiggyBank, label: 'Orçamentos' },
   { to: '/goals', icon: Target, label: 'Metas' },
@@ -90,7 +94,7 @@ export default function AppLayout() {
       {/* Sidebar */}
       <aside className={`
         ${isMobile
-          ? `fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+          ? `fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-500 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
           : 'w-72 shrink-0'
         }
         bg-card border-r border-border flex flex-col shadow-xl

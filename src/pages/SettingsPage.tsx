@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
+import type { TablesUpdate } from '@/integrations/supabase/types';
 import type { Profile, Account, Category } from '@/types/finance';
+import { AccountSchema, CategorySchema } from '@/lib/validators';
 import { toast } from 'sonner';
-import { Plus, Trash2, Pencil, Check, X, User, Tag, Wallet, Save } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X, User, Tag, Wallet, Save, BrainCircuit } from 'lucide-react';
 import { getAccountTypeLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useAISettingsStore } from '@/store/aiSettingsStore';
 
 type TabId = 'general' | 'data';
 
@@ -29,30 +32,50 @@ export default function SettingsPage() {
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState('');
 
-  useEffect(() => { if (user) loadData(); }, [user]);
+  // AI Settings
+  const { provider, apiKey, systemPrompt, setProvider, setApiKey, setSystemPrompt } = useAISettingsStore();
+  const [localProvider, setLocalProvider] = useState(provider);
+  const [localApiKey, setLocalApiKey] = useState(apiKey);
+  const [localSystemPrompt, setLocalSystemPrompt] = useState(systemPrompt);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
+    if (!user) return;
+
     const [profileRes, accountsRes, catsRes] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user!.id).single(),
+      supabase.from('profiles').select('*').eq('id', user.id).single(),
       supabase.from('accounts').select('*').order('created_at'),
       supabase.from('categories').select('*').order('name'),
     ]);
     if (profileRes.data) {
-      const p = profileRes.data as any;
-      setProfile(p as Profile);
-      setFullName(p.full_name);
+      setProfile(profileRes.data as Profile);
+      setFullName(profileRes.data.full_name);
     }
     setAccounts((accountsRes.data || []) as Account[]);
     setCategories((catsRes.data || []) as Category[]);
-  }
+  }, [user]);
+
+  useEffect(() => { if (user) loadData(); }, [loadData, user]);
 
   const updateProfile = async () => {
-    const { error } = await supabase.from('profiles').update({
-      full_name: fullName,
+    if (!user) return;
+
+    const payload: TablesUpdate<'profiles'> = {
+      full_name: fullName.trim(),
       updated_at: new Date().toISOString(),
-    } as any).eq('id', user!.id);
-    if (error) toast.error('Erro ao atualizar perfil');
-    else toast.success('Perfil atualizado!');
+    };
+
+    const { error } = await supabase.from('profiles').update(payload).eq('id', user.id);
+    if (error) {
+      toast.error('Erro ao atualizar perfil');
+      return;
+    }
+
+    // Save AI Settings locally
+    setProvider(localProvider);
+    setApiKey(localApiKey);
+    setSystemPrompt(localSystemPrompt);
+
+    toast.success('Configurações atualizadas!');
   };
 
 
@@ -60,10 +83,25 @@ export default function SettingsPage() {
   const createAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const { error } = await supabase.from('accounts').insert({
-      user_id: user.id, name: accName, type: accType,
+
+    const parsed = AccountSchema.safeParse({
+      name: accName,
+      type: accType,
       balance: parseFloat(accBalance) || 0,
+      currency: 'BRL',
     });
+
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0]?.message || 'Dados inválidos');
+      return;
+    }
+
+    const payload = {
+      user_id: user.id, 
+      ...parsed.data,
+    } as any;
+
+    const { error } = await supabase.from('accounts').insert(payload);
     if (error) { toast.error('Erro ao criar conta'); return; }
     toast.success('Conta criada!');
     setShowAccountForm(false); setAccName(''); setAccBalance('');
@@ -71,7 +109,8 @@ export default function SettingsPage() {
   };
 
   const deleteAccount = async (id: string) => {
-    const { error } = await supabase.from('accounts').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('accounts').delete().eq('id', id).eq('user_id', user.id);
     if (error) toast.error('Erro ao excluir conta');
     else { toast.success('Conta excluída'); loadData(); }
   };
@@ -79,10 +118,25 @@ export default function SettingsPage() {
   // Category CRUD
   const createCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !catName.trim()) return;
-    const { error } = await supabase.from('categories').insert({
-      user_id: user.id, name: catName.trim(), type: catType, color: catColor,
+    if (!user) return;
+    
+    const parsed = CategorySchema.safeParse({
+      name: catName,
+      type: catType,
+      color: catColor,
     });
+
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0]?.message || 'Dados inválidos');
+      return;
+    }
+
+    const payload = {
+      user_id: user.id, 
+      ...parsed.data,
+    } as any;
+
+    const { error } = await supabase.from('categories').insert(payload);
     if (error) { toast.error('Erro ao criar categoria'); return; }
     toast.success('Categoria criada!');
     setShowCatForm(false); setCatName(''); setCatColor('#6B7280');
@@ -90,14 +144,26 @@ export default function SettingsPage() {
   };
 
   const updateCategory = async (id: string) => {
-    if (!editCatName.trim()) return;
-    const { error } = await supabase.from('categories').update({ name: editCatName.trim() }).eq('id', id);
+    if (!user) return;
+
+    const parsed = CategorySchema.safeParse({
+      name: editCatName,
+      type: 'expense', // Just to pass validation, we only update name
+    });
+
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0]?.message || 'Nome inválido');
+      return;
+    }
+
+    const { error } = await supabase.from('categories').update({ name: parsed.data.name }).eq('id', id).eq('user_id', user.id);
     if (error) toast.error('Erro ao atualizar');
     else { toast.success('Categoria atualizada'); setEditingCatId(null); loadData(); }
   };
 
   const deleteCategory = async (id: string) => {
-    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('categories').delete().eq('id', id).eq('user_id', user.id);
     if (error) toast.error('Erro ao excluir categoria');
     else { toast.success('Categoria excluída'); loadData(); }
   };
@@ -176,6 +242,54 @@ export default function SettingsPage() {
                       disabled
                     />
                     <p className="text-[10px] text-muted-foreground mt-1.5 ml-1">O e-mail não pode ser alterado diretamente.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Settings */}
+              <div className="glass-card p-6 space-y-6">
+                <div className="flex items-center gap-3 border-b border-border/50 pb-4 mb-4">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <BrainCircuit className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground leading-tight">Assistente de IA</h3>
+                    <p className="text-xs text-muted-foreground">Configurações do seu assistente virtual</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 ml-1">Provedor de IA</label>
+                    <select
+                      value={localProvider}
+                      onChange={(e) => setLocalProvider(e.target.value as any)}
+                      className={inputClass}
+                    >
+                      <option value="openai">OpenAI (ChatGPT)</option>
+                      <option value="anthropic">Anthropic (Claude)</option>
+                      <option value="gemini">Google (Gemini)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 ml-1">Chave de API (API Key)</label>
+                    <input
+                      type="password"
+                      value={localApiKey}
+                      onChange={(e) => setLocalApiKey(e.target.value)}
+                      className={inputClass}
+                      placeholder={`Sua chave da ${localProvider === 'openai' ? 'OpenAI' : localProvider === 'anthropic' ? 'Anthropic' : 'Google'}`}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1.5 ml-1">Sua chave fica salva apenas no seu navegador e não é enviada para nosso banco de dados.</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 ml-1">Prompt do Sistema (Personalização)</label>
+                    <textarea
+                      value={localSystemPrompt}
+                      onChange={(e) => setLocalSystemPrompt(e.target.value)}
+                      className={cn(inputClass, "min-h-[100px] resize-y")}
+                      placeholder="Instruções sobre como a IA deve se comportar..."
+                    />
                   </div>
                 </div>
               </div>

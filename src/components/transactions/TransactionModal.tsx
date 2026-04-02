@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { useAuthStore } from '@/store/authStore';
 import { TransactionSchema } from '@/lib/validators';
 import type { Transaction, Category, Account } from '@/types/finance';
@@ -12,20 +13,49 @@ interface Props {
   transaction: Transaction | null;
   onClose: () => void;
   onSaved: () => void;
+  initialAccountId?: string;
+  accountTypeFilter?: Account['type'];
+  defaultType?: 'income' | 'expense' | 'transfer';
+  title?: string;
 }
 
-export default function TransactionModal({ categories, accounts, transaction, onClose, onSaved }: Props) {
+export default function TransactionModal({
+  categories,
+  accounts,
+  transaction,
+  onClose,
+  onSaved,
+  initialAccountId,
+  accountTypeFilter,
+  defaultType = 'expense',
+  title,
+}: Props) {
   const user = useAuthStore((s) => s.user);
-  const [type, setType] = useState<'income' | 'expense' | 'transfer'>(transaction?.type || 'expense');
+  const availableAccounts = useMemo(
+    () => (accountTypeFilter ? accounts.filter((account) => account.type === accountTypeFilter) : accounts),
+    [accountTypeFilter, accounts]
+  );
+  const [type, setType] = useState<'income' | 'expense' | 'transfer'>(transaction?.type || defaultType);
   const [amount, setAmount] = useState(transaction ? String(transaction.amount) : '');
   const [description, setDescription] = useState(transaction?.description || '');
   const [categoryId, setCategoryId] = useState(transaction?.category_id || '');
-  const [accountId, setAccountId] = useState(transaction?.account_id || accounts[0]?.id || '');
+  const [accountId, setAccountId] = useState(transaction?.account_id || initialAccountId || availableAccounts[0]?.id || '');
   const [date, setDate] = useState(transaction?.date || new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState(transaction?.notes || '');
   const [saving, setSaving] = useState(false);
 
   const filteredCategories = categories.filter(c => c.type === type || c.type === 'both');
+
+  useEffect(() => {
+    if (!availableAccounts.length) {
+      setAccountId('');
+      return;
+    }
+
+    if (!accountId || !availableAccounts.some((account) => account.id === accountId)) {
+      setAccountId(transaction?.account_id || initialAccountId || availableAccounts[0].id);
+    }
+  }, [accountId, availableAccounts, initialAccountId, transaction?.account_id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,15 +78,26 @@ export default function TransactionModal({ categories, accounts, transaction, on
     }
 
     setSaving(true);
-    const payload = { ...parsed.data, user_id: user.id };
+    const payload: TablesInsert<'transactions'> = {
+      account_id: parsed.data.account_id,
+      amount: parsed.data.amount,
+      category_id: parsed.data.category_id,
+      date: parsed.data.date,
+      description: parsed.data.description,
+      is_recurring: parsed.data.is_recurring,
+      notes: parsed.data.notes,
+      recurring_interval: parsed.data.recurring_interval,
+      tags: parsed.data.tags,
+      type: parsed.data.type,
+      user_id: user.id,
+    };
 
     const { error } = transaction
-      ? await supabase.from('transactions').update(payload as any).eq('id', transaction.id)
-      : await supabase.from('transactions').insert(payload as any);
+      ? await supabase.from('transactions').update(payload as TablesUpdate<'transactions'>).eq('id', transaction.id).eq('user_id', user.id)
+      : await supabase.from('transactions').insert(payload);
 
     if (error) {
       toast.error('Erro ao salvar transação');
-      console.error(error);
     } else {
       toast.success(transaction ? 'Transação atualizada!' : 'Transação criada!');
       onSaved();
@@ -71,7 +112,7 @@ export default function TransactionModal({ categories, accounts, transaction, on
       <div className="w-full max-w-lg glass-card p-6 animate-fade-in" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-serif font-medium text-foreground">
-            {transaction ? 'Editar Movimentação' : 'Adicionar Movimentação'}
+            {title || (transaction ? 'Editar Movimentação' : 'Adicionar Movimentação')}
           </h3>
           <button onClick={onClose} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground transition">
             <X className="w-5 h-5" />
@@ -118,7 +159,7 @@ export default function TransactionModal({ categories, accounts, transaction, on
               <label className="block text-xs font-medium text-muted-foreground mb-1.5">Conta</label>
               <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass} required>
                 <option value="">Selecione</option>
-                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                {availableAccounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div>

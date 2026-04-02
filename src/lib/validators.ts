@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import DOMPurify from 'dompurify';
 
-const sanitize = (val: string) => DOMPurify.sanitize(val, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+const sanitize = (val: string): string => DOMPurify.sanitize(val, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }) as string;
 
 export const TransactionSchema = z.object({
   amount: z.number().positive('Valor deve ser positivo').max(999_999_999, 'Valor muito alto'),
@@ -45,5 +45,16 @@ export const AccountSchema = z.object({
   balance: z.number().default(0),
   currency: z.string().default('BRL').transform(sanitize),
   bank_name: z.string().max(100).optional().nullable().transform(val => val ? sanitize(val) : val),
+  color: z.string().optional().nullable().transform(val => val ? sanitize(val) : val),
+  card_brand: z.string().max(50).optional().nullable().transform(val => val ? sanitize(val) : val),
+  credit_limit: z.number().min(0).optional().nullable(),
+  closing_day: z.number().min(1).max(31).optional().nullable(),
+  due_day: z.number().min(1).max(31).optional().nullable(),
+  last_four_digits: z.string().max(4).optional().nullable().transform(val => val ? sanitize(val) : val),
+});
+
+export const CategorySchema = z.object({
+  name: z.string().min(1, 'Nome obrigatório').max(100).trim().transform(sanitize),
+  type: z.enum(['income', 'expense', 'both']),
   color: z.string().optional().nullable().transform(val => val ? sanitize(val) : val),
 });
