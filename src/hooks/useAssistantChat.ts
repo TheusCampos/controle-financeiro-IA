@@ -182,7 +182,6 @@ Regras adicionais de comunicação (Foco em clareza, humanização e economia de
       await save([...chatHistory, { role: 'assistant', content: finalReply }], snapshot as unknown as Json);
       clearSelectedFile();
     } catch (error: unknown) {
-      console.error(error);
       const message = error instanceof Error ? error.message : 'Falha ao se comunicar com a IA';
       
       let userFriendlyMessage = ERROR_REPLY;

@@ -126,7 +126,6 @@ export function parseAiAction(text: string): ParsedLaunchCommand | null {
     }
     return null;
   } catch (error) {
-    console.error("Falha ao parsear ação da IA", error);
     return null;
   }
 }
@@ -246,8 +245,7 @@ export async function consumeSseStream(
               onDelta(delta);
             }
           } catch (e) {
-            console.warn('Falha ao processar chunk SSE:', e, data);
-            continue;
+            // Silencioso: pedaços SSE malformados podem ocorrer no final de stream
           }
         }
       }

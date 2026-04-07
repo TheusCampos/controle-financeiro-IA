@@ -6,6 +6,7 @@ import type { Profile, Account, Category } from '@/types/finance';
 import { toast } from 'sonner';
 import { User, Wallet, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { encryptData, decryptData } from '@/lib/encryption';
 
 import { useAISettingsStore } from '@/store/aiSettingsStore';
 import ProfileSettings from './components/ProfileSettings';
@@ -40,10 +41,27 @@ export default function SettingsPage() {
     ]);
     if (profileRes.data) {
       setFullName(profileRes.data.full_name);
+      
+      // Load AI settings from Supabase if they exist
+      if (profileRes.data.ai_provider) {
+        setProvider(profileRes.data.ai_provider as 'openai' | 'anthropic' | 'gemini');
+        setLocalProvider(profileRes.data.ai_provider as 'openai' | 'anthropic' | 'gemini');
+      }
+      if (profileRes.data.ai_api_key) {
+        const decryptedKey = decryptData(profileRes.data.ai_api_key);
+        if (decryptedKey) {
+          setApiKey(decryptedKey);
+          setLocalApiKey(decryptedKey);
+        }
+      }
+      if (profileRes.data.ai_system_prompt) {
+        setSystemPrompt(profileRes.data.ai_system_prompt);
+        setLocalSystemPrompt(profileRes.data.ai_system_prompt);
+      }
     }
     setAccounts((accountsRes.data || []) as Account[]);
     setCategories((catsRes.data || []) as Category[]);
-  }, [user]);
+  }, [user, setApiKey, setProvider, setSystemPrompt]);
 
   useEffect(() => { if (user) loadData(); }, [loadData, user]);
 
@@ -52,6 +70,9 @@ export default function SettingsPage() {
 
     const payload: TablesUpdate<'profiles'> = {
       full_name: fullName.trim(),
+      ai_provider: localProvider,
+      ai_api_key: encryptData(localApiKey),
+      ai_system_prompt: localSystemPrompt,
       updated_at: new Date().toISOString(),
     };
 

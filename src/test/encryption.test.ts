@@ -37,8 +37,8 @@ describe('AES-256 Encryption Utility & Storage', () => {
     const fakeCipher = 'U2FsdGVkX19malc2+MaliciousPayloadNotAES==';
     const decrypted = decryptData(fakeCipher);
     
-    // Fallback pra string vazia (seguro para o Zustand parsear)
-    expect(decrypted).toBe('');
+    // Fallback pra null (seguro para o Zustand parsear)
+    expect(decrypted).toBe(null);
   });
 
   it('deve garantir que o Zustand armazena o state global no localStorage DE FORMA CRIPTOGRAFADA', () => {

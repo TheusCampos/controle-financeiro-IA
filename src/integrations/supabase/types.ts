@@ -227,6 +227,8 @@ export type Database = {
         Row: {
           ai_model: string
           ai_provider: string
+          ai_api_key: string | null
+          ai_system_prompt: string | null
           avatar_url: string | null
           created_at: string
           currency: string
@@ -239,6 +241,8 @@ export type Database = {
         Insert: {
           ai_model?: string
           ai_provider?: string
+          ai_api_key?: string | null
+          ai_system_prompt?: string | null
           avatar_url?: string | null
           created_at?: string
           currency?: string
@@ -251,6 +255,8 @@ export type Database = {
         Update: {
           ai_model?: string
           ai_provider?: string
+          ai_api_key?: string | null
+          ai_system_prompt?: string | null
           avatar_url?: string | null
           created_at?: string
           currency?: string

@@ -5,24 +5,25 @@ function getSecretKey(): string | null {
 }
 
 export const encryptData = (data: string): string => {
+  const secretKey = getSecretKey();
+  if (!secretKey) return data; // Fallback se não houver chave (já lidado em auditoria anterior)
+
   try {
-    const secretKey = getSecretKey();
-    if (!secretKey) return '';
     return CryptoJS.AES.encrypt(data, secretKey).toString();
   } catch (error) {
-    console.error('Erro na criptografia de dados', error);
     return '';
   }
 };
 
-export const decryptData = (cipherText: string): string => {
+export const decryptData = (encryptedData: string): string | null => {
+  const secretKey = getSecretKey();
+  if (!secretKey) return encryptedData;
+
   try {
-    const secretKey = getSecretKey();
-    if (!secretKey) return '';
-    const bytes = CryptoJS.AES.decrypt(cipherText, secretKey);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    return decrypted || null;
   } catch (error) {
-    console.error('Erro na decriptografia de dados', error);
-    return '';
+    return null;
   }
 };
