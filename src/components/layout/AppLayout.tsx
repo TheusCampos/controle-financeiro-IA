@@ -14,7 +14,6 @@ import {
   Bot
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -28,7 +27,6 @@ const navItems = [
 
 export default function AppLayout() {
   const signOut = useAuthStore((s) => s.signOut);
-  const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const closeSidebar = () => setSidebarOpen(false);
@@ -87,45 +85,46 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Mobile overlay */}
-      {isMobile && sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={closeSidebar} />
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" 
+          onClick={closeSidebar} 
+        />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        ${isMobile
-          ? `fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-500 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
-          : 'w-72 shrink-0'
-        }
-        bg-card border-r border-border flex flex-col shadow-xl
+        fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border flex flex-col shadow-xl 
+        transform transition-transform duration-300 ease-in-out
+        lg:relative lg:translate-x-0 lg:shrink-0
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {isMobile && (
-          <button onClick={closeSidebar} className="absolute top-4 right-4 p-1.5 text-muted-foreground hover:text-foreground transition">
-            <X className="w-5 h-5" />
-          </button>
-        )}
+        <button 
+          onClick={closeSidebar} 
+          className="absolute top-4 right-4 p-1.5 text-muted-foreground hover:text-foreground transition lg:hidden"
+        >
+          <X className="w-5 h-5" />
+        </button>
         {sidebarContent}
       </aside>
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto scrollbar-thin flex flex-col min-w-0">
         {/* Mobile header */}
-        {isMobile && (
-          <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-2 bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
-            <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-secondary transition-colors shrink-0">
-              <Menu className="w-6 h-6 text-foreground" />
-            </button>
-            <div className="flex-1 flex justify-center px-4">
-              <img 
-                src="/Logo-FinanceAI.png" 
-                alt="Logotipo do FinanceAI" 
-                className="w-auto h-12 max-w-[180px] object-contain" 
-                loading="eager"
-              />
-            </div>
-            <div className="w-10" /> {/* Spacer to maintain logo centered */}
-          </header>
-        )}
+        <header className="lg:hidden sticky top-0 z-20 flex items-center justify-between px-4 py-2 bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-secondary transition-colors shrink-0">
+            <Menu className="w-6 h-6 text-foreground" />
+          </button>
+          <div className="flex-1 flex justify-center px-4">
+            <img 
+              src="/Logo-FinanceAI.png" 
+              alt="Logotipo do FinanceAI" 
+              className="w-auto h-12 max-w-[180px] object-contain" 
+              loading="eager"
+            />
+          </div>
+          <div className="w-10" /> {/* Spacer to maintain logo centered */}
+        </header>
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
           <Outlet />
         </div>

@@ -27,12 +27,12 @@ export default function MyCardsPanel({ cards }: Props) {
           </div>
           <h3 className="text-2xl font-semibold text-foreground tracking-tight">Meus Cartões</h3>
         </div>
-        <Link
-          to="/cards"
-          className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition hover:opacity-90 shadow-sm"
+        <Link 
+          to="/cards" 
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-3 sm:px-5 py-2.5 text-sm font-semibold text-background transition hover:opacity-90 shadow-sm"
         >
-          <Plus className="w-4 h-4" />
-          Adicionar Novo
+          <Plus className="w-5 h-5 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Adicionar Novo</span>
         </Link>
       </div>
 

@@ -146,8 +146,9 @@ export default function GoalsPage() {
           <h2 className="text-3xl font-serif font-medium text-foreground tracking-tight">Metas Financeiras</h2>
           <p className="text-muted-foreground text-sm mt-1">Acompanhe seus objetivos de economia</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-foreground text-background font-medium text-sm hover:opacity-90 shadow-sm transition">
-          <Plus className="w-4 h-4" /> Criar Meta
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-md bg-foreground text-background font-medium text-sm hover:opacity-90 shadow-sm transition">
+          <Plus className="w-5 h-5 sm:w-4 sm:h-4" /> 
+          <span className="hidden sm:inline">Criar Meta</span>
         </button>
       </div>
 

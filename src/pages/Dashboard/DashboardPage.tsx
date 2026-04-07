@@ -155,7 +155,7 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-fade-in pb-8 max-w-[1600px] mx-auto">
       <DashboardHeader userName={userName} />
 
-      <KpiCards summary={summary} />
+      <KpiCards summary={summary} cashFlowData={cashFlowData} />
 
       <MyCardsPanel cards={cardOverview} />
 

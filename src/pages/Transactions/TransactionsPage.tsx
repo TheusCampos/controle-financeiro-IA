@@ -88,10 +88,10 @@ export default function TransactionsPage() {
         </div>
         <button
           onClick={() => { setEditingTxn(null); setModalOpen(true); }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-foreground text-background font-medium text-sm hover:opacity-90 shadow-sm transition"
+          className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-md bg-foreground text-background font-medium text-sm hover:opacity-90 shadow-sm transition"
         >
-          <Plus className="w-4 h-4" />
-          Adicionar movimentação
+          <Plus className="w-5 h-5 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Adicionar movimentação</span>
         </button>
       </div>
 

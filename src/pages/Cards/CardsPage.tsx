@@ -67,11 +67,11 @@ export default function CardsPage() {
             Lançar gasto
           </button>
           <button
-            onClick={() => setShowForm((current) => !current)}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+            onClick={() => setShowForm(!showForm)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-3 sm:px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
           >
-            <Plus className="w-4 h-4" />
-            {showForm ? 'Fechar cadastro' : 'Cadastrar cartão'}
+            <Plus className="w-5 h-5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">{showForm ? 'Fechar cadastro' : 'Cadastrar cartão'}</span>
           </button>
         </div>
       </div>
