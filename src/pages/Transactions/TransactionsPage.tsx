@@ -49,12 +49,14 @@ export default function TransactionsPage() {
     if (!user || !deletingId) return;
     setIsDeleting(true);
     const { error } = await supabase.from('transactions').delete().eq('id', deletingId).eq('user_id', user.id);
-    if (error) { 
-      toast.error('Erro ao excluir movimentação. Tente novamente.'); 
+    if (error) {
+      toast.error('Erro ao excluir movimentação. Tente novamente.');
       appendAuditLog(user.id, 'delete_transaction', 'failed', { error: error.message, id: deletingId } as unknown as Json);
     } else {
-      toast.success('Movimentação excluída com sucesso.');
+      toast.success('Movimentação excluída. Saldo recalculado.');
       appendAuditLog(user.id, 'delete_transaction', 'approved', { id: deletingId } as unknown as Json);
+      // O trigger `trg_txn_balance` recalcula o saldo no servidor.
+      // Forçamos reload para que o saldo da conta apareça atualizado em todas as telas.
       loadData();
     }
     setIsDeleting(false);

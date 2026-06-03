@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Wallet, X } from 'lucide-react';
+import { Pencil, Plus, Trash2, Wallet, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { AccountSchema } from '@/lib/validators';
 import { getAccountTypeLabel } from '@/lib/format';
@@ -51,6 +51,32 @@ export default function AccountSettings({ userId, accounts, onDataChanged, input
     const { error } = await supabase.from('accounts').delete().eq('id', id).eq('user_id', userId);
     if (error) toast.error('Erro ao excluir conta');
     else { toast.success('Conta excluída'); onDataChanged(); }
+  };
+
+  /**
+   * Ajusta o "saldo base" (antes de transações) de uma conta. Como o trigger
+   * `trg_txn_balance` recalcula `balance` a partir de `balance + Σ(transações)`,
+   * atualizar `balance` aqui equivale a mover o ponto de partida.
+   */
+  const adjustBaseBalance = async (account: Account, newBaseBalance: number) => {
+    const confirmed = window.confirm(
+      `Ajustar saldo base de "${account.name}" para R$ ${newBaseBalance.toFixed(2)}? ` +
+      'O saldo atual (já considerando transações) será recalculado automaticamente.'
+    );
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from('accounts')
+      .update({ balance: newBaseBalance })
+      .eq('id', account.id)
+      .eq('user_id', userId);
+
+    if (error) {
+      toast.error('Erro ao ajustar saldo');
+      return;
+    }
+    toast.success('Saldo base atualizado. Saldo efetivo recalculado.');
+    onDataChanged();
   };
 
   return (
@@ -130,6 +156,25 @@ export default function AccountSettings({ userId, accounts, onDataChanged, input
               </div>
               <div className="flex items-center gap-4">
                 <p className="font-mono text-sm font-semibold text-foreground">R$ {Number(acc.balance).toFixed(2)}</p>
+                <button
+                  onClick={() => {
+                    const raw = window.prompt(
+                      `Novo saldo base de "${acc.name}" (R$):`,
+                      String(Number(acc.balance).toFixed(2)),
+                    );
+                    if (raw === null) return;
+                    const value = parseFloat(raw.replace(',', '.'));
+                    if (!Number.isFinite(value)) {
+                      toast.error('Valor inválido');
+                      return;
+                    }
+                    adjustBaseBalance(acc, value);
+                  }}
+                  className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                  title="Ajustar saldo base"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
                 <button
                   onClick={() => deleteAccount(acc.id)}
                   className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"

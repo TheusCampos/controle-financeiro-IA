@@ -13,8 +13,12 @@ dist
 dist-ssr
 *.local
 .env
-/docs
-/supabase
+/coverage
+
+# Supabase local cache (keep migrations tracked)
+supabase/.temp
+supabase/.branches
+supabase/.env
 
 # Editor directories and files
 .vscode/*

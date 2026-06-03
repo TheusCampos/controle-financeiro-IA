@@ -15,7 +15,14 @@ export const TransactionSchema = z.object({
   is_recurring: z.boolean().optional(),
   recurring_interval: z.enum(['daily', 'weekly', 'monthly', 'yearly']).optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),
-});
+  transfer_to_account_id: z.string().uuid('Conta destino inválida').optional().nullable(),
+}).refine(
+  (data) => data.type !== 'transfer' || !!data.transfer_to_account_id,
+  { message: 'Selecione a conta destino para transferências', path: ['transfer_to_account_id'] },
+).refine(
+  (data) => data.type !== 'transfer' || data.account_id !== data.transfer_to_account_id,
+  { message: 'Conta destino deve ser diferente da conta de origem', path: ['transfer_to_account_id'] },
+);
 
 export type TransactionInput = z.infer<typeof TransactionSchema>;
 

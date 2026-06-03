@@ -36,6 +36,8 @@ export interface Account {
   last_four_digits: string | null;
   is_active: boolean;
   created_at: string;
+  /** Fatura corrente (somente type=credit). Derivado de transactions. */
+  current_invoice?: number | null;
 }
 
 export interface Transaction {
@@ -52,6 +54,8 @@ export interface Transaction {
   recurring_interval: string | null;
   tags: string[] | null;
   attachment_url: string | null;
+  /** Conta destino, somente quando type === 'transfer'. */
+  transfer_to_account_id?: string | null;
   created_at: string;
   // joined
   category?: Category;

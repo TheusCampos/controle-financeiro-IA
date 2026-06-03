@@ -24,6 +24,7 @@ export type Database = {
           created_at: string
           credit_limit: number | null
           currency: string
+          current_invoice: number | null
           due_day: number | null
           id: string
           is_active: boolean | null
@@ -41,6 +42,7 @@ export type Database = {
           created_at?: string
           credit_limit?: number | null
           currency?: string
+          current_invoice?: number | null
           due_day?: number | null
           id?: string
           is_active?: boolean | null
@@ -58,6 +60,7 @@ export type Database = {
           created_at?: string
           credit_limit?: number | null
           currency?: string
+          current_invoice?: number | null
           due_day?: number | null
           id?: string
           is_active?: boolean | null
@@ -282,6 +285,7 @@ export type Database = {
           notes: string | null
           recurring_interval: string | null
           tags: string[] | null
+          transfer_to_account_id: string | null
           type: string
           user_id: string
         }
@@ -298,6 +302,7 @@ export type Database = {
           notes?: string | null
           recurring_interval?: string | null
           tags?: string[] | null
+          transfer_to_account_id?: string | null
           type: string
           user_id: string
         }
@@ -314,6 +319,7 @@ export type Database = {
           notes?: string | null
           recurring_interval?: string | null
           tags?: string[] | null
+          transfer_to_account_id?: string | null
           type?: string
           user_id?: string
         }
@@ -336,10 +342,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      accounts_view: {
+        Row: {
+          available_limit: number | null
+          bank_name: string | null
+          card_brand: string | null
+          closing_day: number | null
+          color: string | null
+          created_at: string
+          credit_limit: number | null
+          currency: string
+          current_invoice: number | null
+          due_day: number | null
+          effective_balance: number
+          id: string
+          is_active: boolean | null
+          last_four_digits: string | null
+          name: string
+          type: string
+          user_id: string
+          utilization_pct: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      recalc_account_balance: {
+        Args: { p_account_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

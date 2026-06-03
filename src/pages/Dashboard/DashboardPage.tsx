@@ -47,7 +47,11 @@ export default function DashboardPage() {
 
     setAccounts(accounts);
     setMonthTxns(monthTxns);
-    const totalBalance = accounts.reduce((sum, a) => sum + Number(a.balance), 0);
+    // Para cartão, o "saldo" da view é a fatura; somamos apenas contas não-cartão
+    // no saldo consolidado, evitando duplicar com a fatura do cartão.
+    const totalBalance = accounts
+      .filter((a) => a.type !== 'credit')
+      .reduce((sum, a) => sum + Number(a.balance), 0);
     const monthlyIncome = monthTxns.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0);
     const monthlyExpenses = monthTxns.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
     const savingsRate = monthlyIncome > 0 ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100 : 0;
@@ -125,7 +129,8 @@ export default function DashboardPage() {
   const cardOverview = accounts
     .filter((account) => account.type === 'credit')
     .map((account) => {
-      const spentThisMonth = monthTxns
+      // Fonte da verdade: `current_invoice` mantido pelo trigger. Fallback client-side.
+      const spentThisMonth = Number(account.current_invoice || 0) || monthTxns
         .filter((transaction) => transaction.account_id === account.id && transaction.type === 'expense')
         .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
       const creditLimit = Number(account.credit_limit || 0);

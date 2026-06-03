@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { useAuthStore } from '@/store/authStore';
 import { TransactionSchema } from '@/lib/validators';
+import { formatCurrency } from '@/lib/format';
+import { calculateEffectiveBalance } from '@/lib/balance';
 import type { Transaction, Category, Account } from '@/types/finance';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,6 +44,7 @@ export default function TransactionModal({
   const [accountId, setAccountId] = useState(transaction?.account_id || initialAccountId || availableAccounts[0]?.id || '');
   const [date, setDate] = useState(transaction?.date || new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState(transaction?.notes || '');
+  const [transferToAccountId, setTransferToAccountId] = useState(transaction?.transfer_to_account_id || '');
   const [saving, setSaving] = useState(false);
 
   const filteredCategories = categories.filter(c => c.type === type || c.type === 'both');
@@ -61,8 +64,9 @@ export default function TransactionModal({
     e.preventDefault();
     if (!user) return;
 
+    const parsedAmount = parseFloat(amount);
     const parsed = TransactionSchema.safeParse({
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       description,
       category_id: categoryId || null,
       account_id: accountId,
@@ -88,6 +92,7 @@ export default function TransactionModal({
       notes: parsed.data.notes,
       recurring_interval: parsed.data.recurring_interval,
       tags: parsed.data.tags,
+      transfer_to_account_id: parsed.data.type === 'transfer' ? transferToAccountId || null : null,
       type: parsed.data.type,
       user_id: user.id,
     };
@@ -104,6 +109,33 @@ export default function TransactionModal({
     }
     setSaving(false);
   };
+
+  /** Preview do saldo após aplicar a transação (client-side, espelha o trigger). */
+  const balancePreview = useMemo(() => {
+    const target = availableAccounts.find((a) => a.id === accountId);
+    if (!target) return null;
+
+    const amountNum = parseFloat(amount);
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      return {
+        current: Number(target.balance || 0),
+        after: Number(target.balance || 0),
+        delta: 0,
+      };
+    }
+
+    // Diferença que essa transação causaria
+    let delta = 0;
+    if (type === 'income') delta = amountNum;
+    else if (type === 'expense') delta = -amountNum;
+
+    const after = calculateEffectiveBalance(
+      target,
+      [{ type, amount: amountNum, account_id: target.id, transfer_to_account_id: null }],
+    );
+
+    return { current: Number(target.balance || 0), after, delta: after - Number(target.balance || 0) };
+  }, [accountId, amount, availableAccounts, type]);
 
   const inputClass = "w-full px-4 py-2.5 rounded-md bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition text-sm";
 
@@ -171,10 +203,47 @@ export default function TransactionModal({
             </div>
           </div>
 
+          {type === 'transfer' && (
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Conta destino</label>
+              <select
+                value={transferToAccountId}
+                onChange={(e) => setTransferToAccountId(e.target.value)}
+                className={inputClass}
+                required
+              >
+                <option value="">Selecione a conta destino</option>
+                {availableAccounts
+                  .filter((a) => a.id !== accountId)
+                  .map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1.5">Observações</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inputClass} rows={2} placeholder="Opcional" maxLength={1000} />
           </div>
+
+          {balancePreview && balancePreview.delta !== 0 && (
+            <div
+              className={`rounded-lg border px-3 py-2 text-xs ${
+                balancePreview.delta >= 0
+                  ? 'border-success/30 bg-success/10 text-success'
+                  : 'border-destructive/30 bg-destructive/10 text-destructive'
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              <span className="font-semibold">Saldo projetado:</span>{' '}
+              {formatCurrency(balancePreview.current)} →{' '}
+              <span className="font-bold">{formatCurrency(balancePreview.after)}</span>{' '}
+              ({balancePreview.delta >= 0 ? '+' : ''}
+              {formatCurrency(balancePreview.delta)})
+            </div>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-md bg-secondary text-muted-foreground font-medium text-sm hover:text-foreground transition">

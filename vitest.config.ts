@@ -1,9 +1,13 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { maskSupabaseKey } from "./vite-plugins/maskSupabaseKey";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    maskSupabaseKey({ envVar: "VITE_SUPABASE_PUBLISHABLE_KEY" }),
+  ],
   test: {
     environment: "jsdom",
     globals: true,

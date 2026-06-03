@@ -9,6 +9,25 @@ import type { AIProvider } from '@/config/aiModels';
 import type { Message } from '@/types/assistant';
 
 // TODO: mover para proxy backend (Edge Function no Supabase) para não expor API keys no cliente
+//
+// IMPORTANTE (segurança):
+// A função abaixo envia a `apiKey` do usuário DIRETAMENTE do navegador para os
+// provedores de IA (OpenAI, Anthropic, Gemini). Isso significa que qualquer
+// chave de IA configurada pelo usuário fica acessível no DevTools → Network
+// enquanto a aba do Assistente estiver aberta.
+//
+// O caminho correto é uma Edge Function no Supabase (ex: `functions/v1/ai-proxy`)
+// que:
+//   1. Recebe a requisição do cliente já autenticado (Supabase Auth JWT).
+//   2. Busca a chave de IA do usuário no banco (coluna `profiles.ai_api_key`,
+//      protegida por RLS) OU no Supabase Vault.
+//   3. Encaminha a chamada ao provedor externo SEM expor a chave ao cliente.
+//   4. Retorna apenas a resposta (stream SSE) ao navegador.
+//
+// Esse padrão é o que evita o cenário de "chave de API aparece na aba Network"
+// do mesmo jeito que a chave do Supabase aparece hoje (que, por design, é pública).
+//
+// Veja `docs/SECURITY.md` para a arquitetura completa.
 
 type StreamCallback = (delta: string) => void;
 

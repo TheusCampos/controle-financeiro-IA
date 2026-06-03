@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { maskSupabaseKey } from "./vite-plugins/maskSupabaseKey";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -11,7 +12,10 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    maskSupabaseKey({ envVar: "VITE_SUPABASE_PUBLISHABLE_KEY" }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

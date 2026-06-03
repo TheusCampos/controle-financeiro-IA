@@ -92,6 +92,9 @@ export function useCardsData() {
   const cardSummaries = useMemo<CardSummary[]>(
     () =>
       cards.map((card) => {
+        // `current_invoice` é mantido pelo trigger `trg_txn_balance` no DB.
+        // Fallback client-side cobre migração ainda não aplicada.
+        const dbInvoice = Number(card.current_invoice || 0);
         const spentThisMonth = transactions
           .filter(
             (transaction) =>
@@ -102,13 +105,16 @@ export function useCardsData() {
           )
           .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
 
+        // Quando o trigger está ativo, priorizamos o valor do banco.
+        const effectiveInvoice = dbInvoice > 0 ? dbInvoice : spentThisMonth;
+
         const creditLimit = Number(card.credit_limit || 0);
-        const availableLimit = Math.max(creditLimit - spentThisMonth, 0);
-        const utilization = creditLimit > 0 ? (spentThisMonth / creditLimit) * 100 : 0;
+        const availableLimit = Math.max(creditLimit - effectiveInvoice, 0);
+        const utilization = creditLimit > 0 ? (effectiveInvoice / creditLimit) * 100 : 0;
 
         return {
           ...card,
-          spentThisMonth,
+          spentThisMonth: effectiveInvoice,
           creditLimit,
           availableLimit,
           utilization,
